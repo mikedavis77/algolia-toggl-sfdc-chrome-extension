@@ -1,21 +1,24 @@
 name: Increment Version and Tag
 
 on:
-  push:
+  pull_request:
+    types: [closed]
     branches:
-      - main  # Triggers when code is pushed or merged into main
+      - main
 
 jobs:
   bump-version:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # Crucial permission to allow pushing code and tags back to the repo
+      contents: write
 
     steps:
       # 1. Check out the repository with full history
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
+          ref: main
           fetch-depth: 0
 
       # 2. Read, increment, and write the version number in the manifest
