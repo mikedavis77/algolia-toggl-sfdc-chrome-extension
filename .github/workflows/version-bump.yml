@@ -1,0 +1,60 @@
+name: Increment Version and Tag
+
+on:
+  push:
+    branches:
+      - main  # Triggers when code is pushed or merged into main
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Crucial permission to allow pushing code and tags back to the repo
+
+    steps:
+      # 1. Check out the repository with full history
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # 2. Read, increment, and write the version number in the manifest
+      - name: Increment Manifest Version
+        id: version_step
+        run: |
+          # Read current version from manifest.json using jq
+          OLD_VERSION=$(jq -r '.version' manifest.json)
+          echo "Current version: $OLD_VERSION"
+          
+          # Split the version into individual semantic numbers (Major.Minor.Patch)
+          IFS='.' read -r major minor patch <<< "$OLD_VERSION"
+          
+          # Increment the Patch version number by 1
+          #NEW_PATCH=$((patch + 1))
+          #NEW_VERSION="$major.$minor.$NEW_PATCH"
+          NEW_MINOR=$((minor + 1))
+          NEW_VERSION="$major.$NEW_MINOR.$patch"
+          echo "New version: $NEW_VERSION"
+          
+          # Update the manifest file with the new version string
+          jq --arg json_ver "$NEW_VERSION" '.version = $json_ver' manifest.json > tmp.json && mv tmp.json manifest.json
+          
+          # Export the new version string so subsequent steps can read it
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      # 3. Commit the updated manifest file and push the new git tag
+      - name: Commit and Tag Changes
+        run: |
+          # Set up local git user identity
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          # Commit the modified manifest.json file
+          git add manifest.json
+          git commit -m "chore: bump version to v${{ steps.version_step.outputs.new_version }} [skip ci]"
+          
+          # Create a lightweight git tag pointing to the new commit
+          git tag "v${{ steps.version_step.outputs.new_version }}"
+          
+          # Push both the branch commit and the new tag simultaneously
+          git push origin main --tags
