@@ -1,7 +1,7 @@
 {
   "name": "Algolia SFDC Toggl Integration",
   "description": "Quick and easy way to create Toggl projects from the SFDC cases",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "manifest_version": 3,
   "background": {
     "service_worker": "background.js"
