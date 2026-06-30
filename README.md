@@ -2,4 +2,4 @@
 
 This Chrome extension is for creating Algolia Toggl projects.
 
-test update 1
+test update 2
